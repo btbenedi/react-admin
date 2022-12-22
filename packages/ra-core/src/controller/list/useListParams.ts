@@ -84,6 +84,7 @@ export const useListParams = ({
     resource,
     sort = defaultSort,
     storeKey = `${resource}.listParams`,
+    persistStoreParams = false,
 }: ListParamsOptions): [Parameters, Modifiers] => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -96,7 +97,7 @@ export const useListParams = ({
         location.search,
         resource,
         storeKey,
-        JSON.stringify(disableSyncWithLocation ? localParams : params),
+        JSON.stringify(disableSyncWithLocation && !persistStoreParams ? localParams : params),
         JSON.stringify(filterDefaultValues),
         JSON.stringify(sort),
         perPage,
@@ -142,7 +143,11 @@ export const useListParams = ({
                 // schedule side effects for next tick
                 setTimeout(() => {
                     if (disableSyncWithLocation) {
-                        setLocalParams(tempParams.current);
+                        if(persistStoreParams) {
+                            setParams(tempParams.current);
+                        } else {
+                            setLocalParams(tempParams.current);
+                        }
                     } else {
                         // the useEffect above will apply the changes to the params in the store
                         navigate(
@@ -372,6 +377,10 @@ export interface ListParamsOptions {
     // Whether to disable the synchronization of the list parameters with
     // the current location (URL search parameters)
     disableSyncWithLocation?: boolean;
+    // Used in conjunction with disableSyncWithLocation - Persists list params
+    // in normal store instead of local state
+    // Has no effect if disableSyncWithLocation is false
+    persistStoreParams?: boolean;
     // default value for a filter when displayed but not yet set
     filterDefaultValues?: FilterPayload;
     perPage?: number;
